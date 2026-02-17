@@ -160,7 +160,11 @@ class PyPDF2Parser(BormeAParserBackend):
                         logger.debug('END: cabecera')
                         cabecera = False
                         data = self._clean_data(data)
-                        anuncio_id, empresa, extra = regex_empresa(data, sanitize=self.sanitize)
+                        new_anuncio_id, new_empresa, new_extra = regex_empresa(data, sanitize=self.sanitize)
+                        if new_anuncio_id == anuncio_id and not new_empresa and empresa:
+                            logger.debug('  Duplicate header with blank empresa for anuncio %s, keeping existing: %s' % (anuncio_id, empresa))
+                        else:
+                            anuncio_id, empresa, extra = new_anuncio_id, new_empresa, new_extra
                         logger.debug('  anuncio_id: %s' % anuncio_id)
                         logger.debug('  empresa: %s' % empresa)
                         logger.debug('  extra: {}'.format(extra))
