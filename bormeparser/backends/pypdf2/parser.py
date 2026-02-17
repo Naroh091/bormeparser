@@ -21,7 +21,7 @@
 from bormeparser.backends.base import BormeAParserBackend
 import logging
 
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
 from bormeparser.regex import regex_cargos, regex_empresa, regex_argcolon, regex_noarg, is_acto_cargo, is_acto_bold,\
                               regex_bold_acto, REGEX_ARGCOLON, REGEX_NOARG, REGEX_PDF_TEXT, REGEX_BORME_NUM, REGEX_BORME_CVE,\
@@ -73,9 +73,9 @@ class PyPDF2Parser(BormeAParserBackend):
         self.actos = []
 
         fp = open(self.filename, 'rb')
-        reader = PdfFileReader(fp)
-        for n in range(0, reader.getNumPages()):
-            content = reader.getPage(n).getContents().getData()
+        reader = PdfReader(fp)
+        for n in range(len(reader.pages)):
+            content = reader.pages[n].get_contents().get_data()
             logger.debug('---- BEGIN OF PAGE ----')
 
             # Python 3
@@ -300,6 +300,7 @@ class PyPDF2Parser(BormeAParserBackend):
         end = False
         if not nombreacto:
             logger.debug('No hay nombreacto')
+            end = True
             return end, nombreacto
 
         if is_acto_bold_mix(nombreacto):

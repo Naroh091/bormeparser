@@ -193,31 +193,55 @@ class BormeXML(object):
         self.filename = None
 
     def _load(self, source):
-        def parse_date(fecha):
-            return datetime.datetime.strptime(fecha, '%d/%m/%Y').date()
-
         if source.startswith('http'):
-            req = requests.get(source)
-            content = req.text.encode(req.encoding)
-
+            req = requests.get(source, headers={'Accept': 'application/xml'})
+            content = req.content
             self.xml = etree.fromstring(content).getroottree()
         else:
             self.xml = etree.parse(source)
 
-        if self.xml.getroot().tag != 'sumario':
-            raise BormeDoesntExistException
+        root = self.xml.getroot()
 
-        self.date = parse_date(self.xml.xpath('//sumario/meta/fecha')[0].text)
-        self.nbo = int(self.xml.xpath('//sumario/diario')[0].attrib['nbo'])  # Número de Boletín Oficial
-        self.prev_borme = parse_date(self.xml.xpath('//sumario/meta/fechaAnt')[0].text)
-        next_borme = self.xml.xpath('//sumario/meta/fechaSig')[0].text
-        if next_borme:
-            self.next_borme = parse_date(next_borme)
-            self.is_final = True
-        else:
+        if root.tag == 'response':
+            # New BOE Open Data API format
+            status = root.find('status/code')
+            if status is not None and status.text != '200':
+                raise BormeDoesntExistException
+            sumario = root.find('.//sumario')
+            if sumario is None:
+                raise BormeDoesntExistException
+            self._sumario = sumario
+            self._is_new_format = True
+
+            fecha_str = sumario.find('metadatos/fecha_publicacion').text
+            self.date = datetime.datetime.strptime(fecha_str, '%Y%m%d').date()
+            diario = sumario.find('diario')
+            self.nbo = int(diario.get('numero'))
+            self.prev_borme = None
             self.next_borme = None
-            self.is_final = False
-            logger.debug('Está accediendo un archivo BORME XML no definitivo')
+            self.is_final = True
+
+        elif root.tag == 'sumario':
+            # Old format
+            self._sumario = root
+            self._is_new_format = False
+
+            def parse_date_old(fecha):
+                return datetime.datetime.strptime(fecha, '%d/%m/%Y').date()
+
+            self.date = parse_date_old(self.xml.xpath('//sumario/meta/fecha')[0].text)
+            self.nbo = int(self.xml.xpath('//sumario/diario')[0].attrib['nbo'])
+            self.prev_borme = parse_date_old(self.xml.xpath('//sumario/meta/fechaAnt')[0].text)
+            next_borme = self.xml.xpath('//sumario/meta/fechaSig')[0].text
+            if next_borme:
+                self.next_borme = parse_date_old(next_borme)
+                self.is_final = True
+            else:
+                self.next_borme = None
+                self.is_final = False
+                logger.debug('Está accediendo un archivo BORME XML no definitivo')
+        else:
+            raise BormeDoesntExistException
 
     @property
     def url(self):
@@ -251,14 +275,26 @@ class BormeXML(object):
         assert(date == bxml.date)
         return bxml
 
-    def get_urls_cve(self, seccion=None, provincia=None):
-        protocol = 'https' if self.use_https else 'http'
-        url_base = URL_BASE % protocol
-        urls_cve = {}
+    def _get_item_id(self, item):
+        if self._is_new_format:
+            return item.find('identificador').text
+        return item.get('id')
 
+    def _get_item_url(self, item, tag='urlPdf'):
+        if self._is_new_format:
+            new_tags = {'urlPdf': 'url_pdf', 'urlXml': 'url_xml', 'urlHtm': 'url_html'}
+            url = item.find(new_tags.get(tag, tag)).text
+        else:
+            protocol = 'https' if self.use_https else 'http'
+            url_base = URL_BASE % protocol
+            url = url_base + item.xpath(tag)[0].text
+        return url
+
+    def get_urls_cve(self, seccion=None, provincia=None):
+        urls_cve = {}
         for item in self._build_xpath(seccion, provincia):
-            cve = item.get('id')
-            url = url_base + item.xpath('urlPdf')[0].text
+            cve = self._get_item_id(item)
+            url = self._get_item_url(item)
             urls_cve[cve] = url
         return urls_cve
 
@@ -279,42 +315,54 @@ class BormeXML(object):
 
     def get_cves(self, seccion=None, provincia=None):
         """ Obtiene los CVEs """
-
         cves = []
         for item in self._build_xpath(seccion, provincia):
-            if not item.get('id').endswith('-99'):
-                cves.append(item.get('id'))
+            item_id = self._get_item_id(item)
+            if not item_id.endswith('-99'):
+                cves.append(item_id)
         if len(cves) == 1:
             cves = cves[0]
         return cves
 
     def get_sizes(self, seccion=None, provincia=None):
         """ Obtiene un diccionario con el CVE y su tamaño """
-
         sizes = {}
         for item in self._build_xpath(seccion, provincia):
-            if not item.get('id').endswith('-99'):
-                cve = item.get('id')
-                size = item.xpath('urlPdf')[0].get('szBytes')
-                sizes[cve] = int(size)
+            item_id = self._get_item_id(item)
+            if not item_id.endswith('-99'):
+                if self._is_new_format:
+                    size = item.find('url_pdf').get('szBytes')
+                else:
+                    size = item.xpath('urlPdf')[0].get('szBytes')
+                sizes[item_id] = int(size)
         return sizes
 
     def get_url_cve(self, cve):
         """ Devuelve la url de descarga de un BORME-PDF """
-        xpath = '//sumario/diario/seccion/emisor/item[@id="{}"]/urlPdf/text()'.format(cve)
-        urls = self.xml.xpath(xpath)
-
-        if len(urls) != 1:
+        if self._is_new_format:
+            for item in self._sumario.iter('item'):
+                ident = item.find('identificador')
+                if ident is not None and ident.text == cve:
+                    return item.find('url_pdf').text
             raise AttributeError('CVE not found in this BORME XML')
-
-        protocol = 'https' if self.use_https else 'http'
-        url_base = URL_BASE % protocol
-        return url_base + urls[0]
+        else:
+            xpath = '//sumario/diario/seccion/emisor/item[@id="{}"]/urlPdf/text()'.format(cve)
+            urls = self.xml.xpath(xpath)
+            if len(urls) != 1:
+                raise AttributeError('CVE not found in this BORME XML')
+            protocol = 'https' if self.use_https else 'http'
+            url_base = URL_BASE % protocol
+            return url_base + urls[0]
 
     def get_provincias(self, seccion):
-        xpath = '//sumario/diario/seccion[@num="{}"]/emisor/item/titulo/text()'.format(seccion)
-        provincias = self.xml.xpath(xpath)
-        provincias.remove("ÍNDICE ALFABÉTICO DE SOCIEDADES")
+        if self._is_new_format:
+            provincias = [item.find('titulo').text
+                          for item in self._sumario.findall('.//diario/seccion[@codigo="{}"]/item'.format(seccion))]
+        else:
+            xpath = '//sumario/diario/seccion[@num="{}"]/emisor/item/titulo/text()'.format(seccion)
+            provincias = self.xml.xpath(xpath)
+        if "ÍNDICE ALFABÉTICO DE SOCIEDADES" in provincias:
+            provincias.remove("ÍNDICE ALFABÉTICO DE SOCIEDADES")
         return provincias
 
     # TODO: Los nombres en el XML vienen en sus respectivos idiomas
@@ -323,6 +371,11 @@ class BormeXML(object):
         """
             Devuelve una lista con los elementos item
         """
+        if self._is_new_format:
+            return self._build_xpath_new(seccion, provincia)
+        return self._build_xpath_old(seccion, provincia)
+
+    def _build_xpath_old(self, seccion=None, provincia=None):
         if seccion and provincia:
             xpath = '//sumario/diario/seccion[@num="{}"]/emisor/item/titulo[text()="{}"]'.format(seccion, provincia)
         elif seccion:
@@ -337,28 +390,51 @@ class BormeXML(object):
         else:
             return self.xml.xpath(xpath)
 
+    def _build_xpath_new(self, seccion=None, provincia=None):
+        if seccion and provincia:
+            xpath = './/diario/seccion[@codigo="{}"]/item/titulo[text()="{}"]'.format(seccion, provincia)
+        elif seccion:
+            xpath = './/diario/seccion[@codigo="{}"]/item'.format(seccion)
+        elif provincia:
+            xpath = './/diario/seccion/item/titulo[text()="{}"]'.format(provincia)
+        else:
+            xpath = './/diario/seccion/item | .//diario/seccion/apartado/item'
+
+        if provincia:
+            return [item.getparent() for item in self._sumario.xpath(xpath)]
+        else:
+            return self._sumario.xpath(xpath)
+
     def _get_url_borme_c(self, format='xml'):
         """Obtiene las URLs para descargar los BORMEs de la seccion C y la
            fecha indicada.
 
            El parámetro format puede ser: 'xml', 'html' o 'pdf'
         """
-
-        protocol = 'https' if self.use_https else 'http'
-        url_base = URL_BASE % protocol
         urls = {}
 
-        xpath_query = '//sumario/diario/seccion[@num="C"]/emisor/item'
-        for item in self.xml.xpath(xpath_query):
-            if format == 'xml':
-                url = url_base + item.xpath('urlXml')[0].text
-            elif format in ('htm', 'html'):
-                url = url_base + item.xpath('urlHtm')[0].text
-            elif format == 'pdf':
-                url = url_base + item.xpath('urlPdf')[0].text
-            cve = item.get('id')
-            filename = '{}.{}'.format(cve, format)
-            urls[filename] = url
+        if self._is_new_format:
+            format_map = {'xml': 'url_xml', 'htm': 'url_html', 'html': 'url_html', 'pdf': 'url_pdf'}
+            tag = format_map.get(format, format)
+            for item in self._sumario.xpath('.//diario/seccion[@codigo="C"]/apartado/item'):
+                url_elem = item.find(tag)
+                if url_elem is not None:
+                    cve = item.find('identificador').text
+                    filename = '{}.{}'.format(cve, format)
+                    urls[filename] = url_elem.text
+        else:
+            protocol = 'https' if self.use_https else 'http'
+            url_base = URL_BASE % protocol
+            for item in self.xml.xpath('//sumario/diario/seccion[@num="C"]/emisor/item'):
+                if format == 'xml':
+                    url = url_base + item.xpath('urlXml')[0].text
+                elif format in ('htm', 'html'):
+                    url = url_base + item.xpath('urlHtm')[0].text
+                elif format == 'pdf':
+                    url = url_base + item.xpath('urlPdf')[0].text
+                cve = item.get('id')
+                filename = '{}.{}'.format(cve, format)
+                urls[filename] = url
 
         return urls
 
@@ -376,18 +452,19 @@ class BormeXML(object):
             raise AttributeError(
                     'You must specifiy either provincia or seccion or both')
 
-        protocol = 'https' if self.use_https else 'http'
-        url_base = URL_BASE % protocol
         urls = {}
 
         for item in self._build_xpath(seccion, provincia):
             if seccion and provincia:
-                key = item.get('id')  # cve
+                key = self._get_item_id(item)  # cve
             elif seccion:
-                key = item.xpath('titulo')[0].text  # provincia
+                key = item.xpath('titulo')[0].text if not self._is_new_format else item.find('titulo').text
             elif provincia:
-                key = item.getparent().getparent().get('num')  # seccion
-            url = url_base + item.xpath('urlPdf')[0].text
+                if self._is_new_format:
+                    key = item.getparent().get('codigo')  # seccion
+                else:
+                    key = item.getparent().getparent().get('num')  # seccion
+            url = self._get_item_url(item)
             urls[key] = url
 
         return urls
@@ -415,29 +492,27 @@ class BormeXML(object):
 
         Útil cuando se genera el XML a partir de una fecha.
         """
-        # El archivo generado es diferente. Se corrige manualmente:
-        #   en la cabecera XML usa " en lugar de '
-        #   <fechaSig/> en lugar de <fechaSig></fechaSig>
-
         # el path puede no existir ya que es de una fecha anterior.
         if not os.path.isdir(os.path.dirname(path)):
             os.makedirs(os.path.dirname(path))
 
-        self.xml.write(path, encoding='iso-8859-1', pretty_print=True)
+        if self._is_new_format:
+            self.xml.write(path, encoding='utf-8', xml_declaration=True, pretty_print=True)
+        else:
+            self.xml.write(path, encoding='iso-8859-1', pretty_print=True)
 
-        with open(path, 'r', encoding='iso-8859-1') as fp:
-            content = fp.read()
+            with open(path, 'r', encoding='iso-8859-1') as fp:
+                content = fp.read()
 
-        # Reemplaza comillas simples
-        content = content.replace(
-                    "<?xml version='1.0' encoding='ISO-8859-1'?>",
-                    '<?xml version="1.0" encoding="ISO-8859-1"?>')
-        if not self.is_final:
-            logger.debug('Está guardando un archivo no definitivo')
-            content = content.replace('<fechaSig/>', '<fechaSig></fechaSig>')
+            content = content.replace(
+                        "<?xml version='1.0' encoding='ISO-8859-1'?>",
+                        '<?xml version="1.0" encoding="ISO-8859-1"?>')
+            if not self.is_final:
+                logger.debug('Está guardando un archivo no definitivo')
+                content = content.replace('<fechaSig/>', '<fechaSig></fechaSig>')
 
-        with open(path, 'w', encoding='iso-8859-1') as fp:
-            fp.write(content)
+            with open(path, 'w', encoding='iso-8859-1') as fp:
+                fp.write(content)
 
         return True
 

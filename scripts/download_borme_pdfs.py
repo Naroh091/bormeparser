@@ -40,43 +40,44 @@ def download_range(begin, end, directory, seccion, provincia=None, forcedownload
     next_date = begin
     total_downloaded = 0
 
-    while next_date and next_date <= end:
+    while next_date <= end:
+        # Skip weekends
+        if next_date.weekday() >= 5:
+            next_date += datetime.timedelta(days=1)
+            continue
+
         path = get_borme_pdf_path(next_date, directory)
         xml_path = get_borme_xml_filepath(next_date, directory)
         logger.info('\nDownloading files from {} (sección {}) to {}\n'.format(next_date, seccion, path))
         try:
             bxml = BormeXML.from_file(xml_path)
-            if bxml.next_borme and (not forcedownload):
-                logger.debug('{filename} already exists!'.format(filename=os.path.basename(xml_path)))
-            else:
+            if forcedownload:
                 logger.debug('Re-downloading {filename}'.format(filename=os.path.basename(xml_path)))
                 bxml = BormeXML.from_date(next_date)
-                try:
-                    os.makedirs(os.path.dirname(xml_path))
-                except OSError:
-                    pass
+                os.makedirs(os.path.dirname(xml_path), exist_ok=True)
                 bxml.save_to_file(xml_path)
+            else:
+                logger.debug('{filename} already exists!'.format(filename=os.path.basename(xml_path)))
 
         except IOError:
             logger.debug('Downloading {filename}'.format(filename=os.path.basename(xml_path)))
-            bxml = BormeXML.from_date(next_date)
             try:
-                os.makedirs(os.path.dirname(xml_path))
-            except OSError:
-                pass
+                bxml = BormeXML.from_date(next_date)
+            except BormeDoesntExistException:
+                logger.debug('No BORME for {} (holiday?)'.format(next_date))
+                next_date += datetime.timedelta(days=1)
+                continue
+            os.makedirs(os.path.dirname(xml_path), exist_ok=True)
             bxml.save_to_file(xml_path)
 
-        try:
-            os.makedirs(path)
-        except OSError:
-            pass
+        os.makedirs(path, exist_ok=True)
 
         _, files = bxml.download_borme(path, provincia=provincia, seccion=seccion, forcedownload=forcedownload)
 
         if len(files) > 0:
             logger.info('Downloaded {} files from {}'.format(len(files), next_date))
         total_downloaded += len(files)
-        next_date = bxml.next_borme
+        next_date += datetime.timedelta(days=1)
 
     logger.info('\n{} total files were downloaded'.format(total_downloaded))
 

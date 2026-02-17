@@ -41,7 +41,12 @@ def check_range(begin, end, provincia, seccion, directory, download_xml):
     results = {'good': 0, 'missing': 0, 'incorrect': 0}
     summary = []
 
-    while next_date and next_date <= end:
+    while next_date <= end:
+        # Skip weekends
+        if next_date.weekday() >= 5:
+            next_date += datetime.timedelta(days=1)
+            continue
+
         logger.info('Checking files from {}'.format(next_date.isoformat()))
         xml_path = get_borme_xml_filepath(next_date, directory)
         logger.debug(xml_path)
@@ -50,16 +55,19 @@ def check_range(begin, end, provincia, seccion, directory, download_xml):
         except IOError:
             if download_xml:
                 logger.info('Downloading {}'.format(os.path.basename(xml_path)))
-                bxml = BormeXML.from_date(next_date)
                 try:
-                    os.makedirs(os.path.dirname(xml_path))
-                except OSError:
-                    pass
+                    bxml = BormeXML.from_date(next_date)
+                except BormeDoesntExistException:
+                    logger.debug('No BORME for {} (holiday?)'.format(next_date))
+                    next_date += datetime.timedelta(days=1)
+                    continue
+                os.makedirs(os.path.dirname(xml_path), exist_ok=True)
                 bxml.save_to_file(xml_path)
             else:
                 logger.info('Missing XML: {}\n'.format(os.path.basename(xml_path)))
                 logger.info('If you want to continue use --download-xml or -x\n')
-                return
+                next_date += datetime.timedelta(days=1)
+                continue
 
         sizes = bxml.get_sizes(seccion, provincia)
         path = get_borme_pdf_path(bxml.date, directory)
@@ -85,11 +93,7 @@ def check_range(begin, end, provincia, seccion, directory, download_xml):
             results['good'] += 1
             logger.debug('OK\n')
 
-        next_date = bxml.next_borme
-
-    if bxml.date != end:
-        print("\nWarning, could not continue and reach the end date.")
-        print("Try removing " + xml_path + " and then run with --download-xml.")
+        next_date += datetime.timedelta(days=1)
 
     if len(summary) > 0:
         print('\nMissing or incorrect files:')
