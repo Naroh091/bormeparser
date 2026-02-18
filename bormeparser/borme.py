@@ -68,7 +68,7 @@ class BormeActo(object):
     """
     def __init__(self, name, value):
         logger.debug('new %s(%s): %s' % (self.__class__.__name__, name, value))
-        if name not in ACTO.ALL_KEYWORDS:
+        if name is not None and name not in ACTO.ALL_KEYWORDS:
             logger.warning('Invalid acto found: %s' % name)
             # raise BormeInvalidActoException(
             #       'Invalid acto found: %s' % name)

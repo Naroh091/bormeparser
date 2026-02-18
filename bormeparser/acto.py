@@ -76,6 +76,7 @@ class ACTO:
     CIERRE_SUCURSAL = 55
     ADAPTACION_LEY_44_2015 = 56
     BENEFICIARIA = 57
+    CIERRE_PROVISIONAL_ART485_TRLC = 58
 
     # Palabras clave con argumentos
     _arg_keywords = {
@@ -87,6 +88,7 @@ class ACTO:
         'Cambio de denominación social': CAMBIO_DE_DENOMINACION_SOCIAL,
         'Cambio de domicilio social': CAMBIO_DE_DOMICILIO_SOCIAL,
         'Ampliacion del objeto social': AMPLIACION_DEL_OBJETO_SOCIAL,
+        'Ampliación del objeto social': AMPLIACION_DEL_OBJETO_SOCIAL,
         'Disolución': DISOLUCION,
         'Reelecciones': REELECCIONES,
         'Constitución': CONSTITUCION,
@@ -126,6 +128,7 @@ class ACTO:
         'Sociedad unipersonal': SOCIEDAD_UNIPERSONAL,
         'Extinción': EXTINCION,
         'Pérdida del caracter de unipersonalidad': PERDIDA_DEL_CARACTER_DE_UNIPERSONALIDAD,
+        'Pérdida del carácter de unipersonalidad': PERDIDA_DEL_CARACTER_DE_UNIPERSONALIDAD,
         'Reapertura hoja registral': REAPERTURA_HOJA_REGISTRAL,
         'Adaptación Ley 2/95': ADAPTACION_LEY_2_95,
         'Adaptación Ley 44/2015': ADAPTACION_LEY_44_2015,
@@ -137,6 +140,8 @@ class ACTO:
         'Reactivación de la sociedad (Art. 242 del Reglamento del Registro Mercantil)': REACTIVACION_DE_LA_SOCIEDAD,
         'Adaptación de sociedad': ADAPTACION_DE_LA_SOCIEDAD,
         'Cierre de Sucursal': CIERRE_SUCURSAL,
+        'Cierre provisional hoja registral Art.485 TRLC. Insuficiencia de masa activa': CIERRE_PROVISIONAL_ART485_TRLC,
+        'Cierre provisional hoja registral Art.485 TRLC. Finalización fase Liquidación': CIERRE_PROVISIONAL_ART485_TRLC,
     }
 
     # Palabras clave seguidas por :
