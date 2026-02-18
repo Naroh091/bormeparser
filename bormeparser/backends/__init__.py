@@ -1,6 +1,6 @@
 
 try:
-    from PyPDF2 import PdfFileWriter, PdfFileReader
+    from PyPDF2 import PdfWriter, PdfReader
     import pdfminer
     from .parser1.parser import Parser1
 except ImportError:

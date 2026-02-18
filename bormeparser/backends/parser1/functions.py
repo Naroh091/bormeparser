@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # bormeparser.backends.parser1.functions.py -
 # Copyright (C) 2015-2022 Pablo Castellano <pablo@anche.no>
@@ -23,7 +24,7 @@ import json
 
 
 try:
-    from PyPDF2 import PdfFileWriter, PdfFileReader
+    from PyPDF2 import PdfWriter as PdfFileWriter, PdfReader as PdfFileReader
     logging.info('Using PyPDF2')
 except ImportError:
     from pyPdf import PdfFileWriter, PdfFileReader

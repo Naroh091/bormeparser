@@ -1,0 +1,216 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<response>
+  <status>
+    <code>200</code>
+    <text>ok</text>
+  </status>
+  <data>
+    <sumario>
+      <metadatos>
+        <publicacion>BORME</publicacion>
+        <fecha_publicacion>20250107</fecha_publicacion>
+      </metadatos>
+      <diario numero="3">
+        <sumario_diario>
+          <identificador>BORME-S-2025-3</identificador>
+          <url_pdf szBytes="210385" szKBytes="205">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-S-2025-3.pdf</url_pdf>
+        </sumario_diario>
+        <seccion codigo="A" nombre="SECCIÓN PRIMERA. Empresarios. Actos inscritos">
+          <item>
+            <identificador>BORME-A-2025-3-02</identificador>
+            <titulo>ALBACETE</titulo>
+            <url_pdf szBytes="181991" szKBytes="178" pagina_inicial="368" pagina_final="368">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-02.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-03</identificador>
+            <titulo>ALICANTE/ALACANT</titulo>
+            <url_pdf szBytes="270631" szKBytes="264" pagina_inicial="369" pagina_final="379">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-03.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-04</identificador>
+            <titulo>ALMERÍA</titulo>
+            <url_pdf szBytes="193292" szKBytes="189" pagina_inicial="380" pagina_final="381">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-04.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-06</identificador>
+            <titulo>BADAJOZ</titulo>
+            <url_pdf szBytes="193144" szKBytes="189" pagina_inicial="382" pagina_final="383">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-06.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-07</identificador>
+            <titulo>ILLES BALEARS</titulo>
+            <url_pdf szBytes="203185" szKBytes="198" pagina_inicial="384" pagina_final="386">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-07.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-08</identificador>
+            <titulo>BARCELONA</titulo>
+            <url_pdf szBytes="406539" szKBytes="397" pagina_inicial="387" pagina_final="411">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-08.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-11</identificador>
+            <titulo>CÁDIZ</titulo>
+            <url_pdf szBytes="193612" szKBytes="189" pagina_inicial="412" pagina_final="413">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-11.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-12</identificador>
+            <titulo>CASTELLÓN/CASTELLÓ</titulo>
+            <url_pdf szBytes="202838" szKBytes="198" pagina_inicial="414" pagina_final="416">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-12.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-14</identificador>
+            <titulo>CÓRDOBA</titulo>
+            <url_pdf szBytes="198925" szKBytes="194" pagina_inicial="417" pagina_final="419">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-14.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-15</identificador>
+            <titulo>A CORUÑA</titulo>
+            <url_pdf szBytes="181259" szKBytes="177" pagina_inicial="420" pagina_final="420">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-15.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-16</identificador>
+            <titulo>CUENCA</titulo>
+            <url_pdf szBytes="212292" szKBytes="207" pagina_inicial="421" pagina_final="424">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-16.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-17</identificador>
+            <titulo>GIRONA</titulo>
+            <url_pdf szBytes="194086" szKBytes="190" pagina_inicial="425" pagina_final="426">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-17.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-18</identificador>
+            <titulo>GRANADA</titulo>
+            <url_pdf szBytes="205351" szKBytes="201" pagina_inicial="427" pagina_final="430">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-18.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-20</identificador>
+            <titulo>GIPUZKOA</titulo>
+            <url_pdf szBytes="327020" szKBytes="319" pagina_inicial="431" pagina_final="446">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-20.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-21</identificador>
+            <titulo>HUELVA</titulo>
+            <url_pdf szBytes="254453" szKBytes="248" pagina_inicial="447" pagina_final="455">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-21.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-23</identificador>
+            <titulo>JAÉN</titulo>
+            <url_pdf szBytes="179909" szKBytes="176" pagina_inicial="456" pagina_final="456">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-23.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-24</identificador>
+            <titulo>LEÓN</titulo>
+            <url_pdf szBytes="187237" szKBytes="183" pagina_inicial="457" pagina_final="458">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-24.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-28</identificador>
+            <titulo>MADRID</titulo>
+            <url_pdf szBytes="563787" szKBytes="551" pagina_inicial="459" pagina_final="498">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-28.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-29</identificador>
+            <titulo>MÁLAGA</titulo>
+            <url_pdf szBytes="275053" szKBytes="269" pagina_inicial="499" pagina_final="509">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-29.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-30</identificador>
+            <titulo>MURCIA</titulo>
+            <url_pdf szBytes="225794" szKBytes="221" pagina_inicial="510" pagina_final="515">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-30.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-31</identificador>
+            <titulo>NAVARRA</titulo>
+            <url_pdf szBytes="189245" szKBytes="185" pagina_inicial="516" pagina_final="517">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-31.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-32</identificador>
+            <titulo>OURENSE</titulo>
+            <url_pdf szBytes="188127" szKBytes="184" pagina_inicial="518" pagina_final="519">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-32.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-33</identificador>
+            <titulo>ASTURIAS</titulo>
+            <url_pdf szBytes="274057" szKBytes="268" pagina_inicial="520" pagina_final="530">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-33.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-35</identificador>
+            <titulo>LAS PALMAS</titulo>
+            <url_pdf szBytes="234738" szKBytes="229" pagina_inicial="531" pagina_final="537">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-35.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-37</identificador>
+            <titulo>SALAMANCA</titulo>
+            <url_pdf szBytes="219932" szKBytes="215" pagina_inicial="538" pagina_final="542">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-37.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-38</identificador>
+            <titulo>SANTA CRUZ DE TENERIFE</titulo>
+            <url_pdf szBytes="179181" szKBytes="175" pagina_inicial="543" pagina_final="543">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-38.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-39</identificador>
+            <titulo>CANTABRIA</titulo>
+            <url_pdf szBytes="210746" szKBytes="206" pagina_inicial="544" pagina_final="547">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-39.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-40</identificador>
+            <titulo>SEGOVIA</titulo>
+            <url_pdf szBytes="183440" szKBytes="179" pagina_inicial="548" pagina_final="548">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-40.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-41</identificador>
+            <titulo>SEVILLA</titulo>
+            <url_pdf szBytes="327300" szKBytes="320" pagina_inicial="549" pagina_final="565">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-41.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-42</identificador>
+            <titulo>SORIA</titulo>
+            <url_pdf szBytes="185097" szKBytes="181" pagina_inicial="566" pagina_final="566">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-42.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-43</identificador>
+            <titulo>TARRAGONA</titulo>
+            <url_pdf szBytes="232144" szKBytes="227" pagina_inicial="567" pagina_final="572">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-43.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-46</identificador>
+            <titulo>VALENCIA/VALÈNCIA</titulo>
+            <url_pdf szBytes="253275" szKBytes="247" pagina_inicial="573" pagina_final="580">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-46.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-47</identificador>
+            <titulo>VALLADOLID</titulo>
+            <url_pdf szBytes="192139" szKBytes="188" pagina_inicial="581" pagina_final="582">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-47.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-51</identificador>
+            <titulo>CEUTA</titulo>
+            <url_pdf szBytes="183386" szKBytes="179" pagina_inicial="583" pagina_final="583">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-51.pdf</url_pdf>
+          </item>
+          <item>
+            <identificador>BORME-A-2025-3-99</identificador>
+            <titulo>ÍNDICE ALFABÉTICO DE SOCIEDADES</titulo>
+            <url_pdf szBytes="1571344" szKBytes="1535" pagina_inicial="584" pagina_final="629">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-A-2025-3-99.pdf</url_pdf>
+          </item>
+        </seccion>
+        <seccion codigo="B" nombre="SECCIÓN PRIMERA. Empresarios. Otros actos publicados en el Registro Mercantil">
+          <item>
+            <identificador>BORME-B-2025-3-33</identificador>
+            <titulo>ASTURIAS</titulo>
+            <url_pdf szBytes="190411" szKBytes="186" pagina_inicial="630" pagina_final="630">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-B-2025-3-33.pdf</url_pdf>
+          </item>
+        </seccion>
+        <seccion codigo="C" nombre="SECCIÓN SEGUNDA. Anuncios y avisos legales">
+          <apartado codigo="002" nombre="CONVOCATORIAS DE JUNTAS">
+            <item>
+              <identificador>BORME-C-2025-15</identificador>
+              <titulo>COMERCIALIZADORA MEDITERRÁNEA DE VIVIENDAS, S.L.</titulo>
+              <url_pdf szBytes="186490" szKBytes="182" pagina_inicial="22" pagina_final="22">https://www.boe.es/borme/dias/2025/01/07/pdfs/BORME-C-2025-15.pdf</url_pdf>
+              <url_html>https://www.boe.es/diario_borme/txt.php?id=BORME-C-2025-15</url_html>
+              <url_xml>https://www.boe.es/diario_borme/xml.php?id=BORME-C-2025-15</url_xml>
+            </item>
+          </apartado>
+        </seccion>
+      </diario>
+    </sumario>
+  </data>
+</response>

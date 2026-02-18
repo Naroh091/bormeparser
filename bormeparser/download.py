@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # download.py -
 # Copyright (C) 2015-2022 Pablo Castellano <pablo@anche.no>
@@ -45,7 +46,7 @@ logger.setLevel(logging.WARN)
 
 # TODO: boe.gob.es es un mirror? Resuelve a una IP distinta.
 BORME_AB_PDF_URL = "{protocol}://boe.es/borme/dias/{year}/{month:02d}/{day:02d}/pdfs/BORME-{seccion}-{year}-{nbo}-{provincia}.pdf"
-BORME_XML_URL = "{protocol}://www.boe.es/diario_borme/xml.php?id=BORME-S-{year}{month:02d}{day:02d}"
+BORME_XML_URL = "https://www.boe.es/datosabiertos/api/borme/sumario/{year}{month:02d}{day:02d}"
 BORME_C_HTM_URL = "{protocol}://boe.es/diario_borme/txt.php?id=BORME-C-{year}-{anuncio}"
 BORME_C_PDF_URL = "{protocol}://boe.es/borme/dias/{year}/{month:02d}/{day:02d}/pdfs/BORME-C-{year}-{anuncio}.pdf"
 BORME_C_XML_URL = "{protocol}://boe.es/diario_borme/xml.php?id=BORME-C-{year}-{anuncio}"
@@ -59,26 +60,26 @@ THREADS = 8
 
 # date = (year, month, date) or datetime.date
 # filename = path to filename or just filename
-def download_xml(date, filename, secure=USE_HTTPS):
+def download_xml(date, filename, secure=USE_HTTPS, forcedownload=False):
     url = get_url_xml(date, secure=secure)
-    downloaded = download_url(url, filename)
+    downloaded = download_url(url, filename, forcedownload=forcedownload, headers={'Accept': 'application/xml'})
     return downloaded
 
 
-def download_pdfs(date, path, provincia=None, seccion=None, secure=USE_HTTPS):
+def download_pdfs(date, path, provincia=None, seccion=None, secure=USE_HTTPS, forcedownload=False):
     """ Descarga BORMEs PDF de las provincia, la seccion y la fecha indicada """
     urls = get_url_pdfs(date, provincia=provincia, seccion=seccion, secure=secure)
-    files = download_urls(urls, path)
+    files = download_urls(urls, path, forcedownload=forcedownload)
     return True, files
 
 
 # date = (year, month, date) or datetime.date
 # seccion = ('A', 'B', 'C') or SECCION.A, SECCION.B, ...
 # province = class PROVINCIA: PROVINCIA.MALAGA, PROVINCIA.MADRID, ...
-def download_pdf(date, filename, seccion, provincia, parse=False):
+def download_pdf(date, filename, seccion, provincia, parse=False, forcedownload=False):
     """ Descarga BORME PDF de la provincia, la seccion y la fecha indicada """
     url = get_url_pdf(date, seccion, provincia)
-    downloaded = download_url(url, filename)
+    downloaded = download_url(url, filename, forcedownload=forcedownload)
 
     if downloaded:
         logger.debug('Downloaded: {}'.format(filename))
@@ -145,38 +146,59 @@ def get_nbo_from_xml(source):
         Nota: Requiere conexión a Internet si source es una URL
     """
     if source.startswith('http'):
-        req = requests.get(source)
-        content = req.text.encode(req.encoding)
+        req = requests.get(source, headers={'Accept': 'application/xml'})
+        content = req.content
         tree = etree.fromstring(content).getroottree()
     else:
         tree = etree.parse(source)
 
-    if tree.getroot().tag != 'sumario':
+    root = tree.getroot()
+    if root.tag == 'response':
+        status = root.find('status/code')
+        if status is not None and status.text != '200':
+            raise BormeDoesntExistException
+        diario = root.find('.//sumario/diario')
+        if diario is None:
+            raise BormeDoesntExistException
+        return diario.get('numero')
+    elif root.tag == 'sumario':
+        return tree.xpath('//sumario/diario')[0].attrib['nbo']
+    else:
         raise BormeDoesntExistException
-
-    return tree.xpath('//sumario/diario')[0].attrib['nbo']
 
 
 def get_url_pdfs_provincia(date, provincia, secure=USE_HTTPS):
     """ Obtiene las URLs para descargar los BORMEs de la provincia y fecha indicada """
     url = get_url_xml(date, secure=secure)
-    req = requests.get(url)
-    protocol = 'https' if secure else 'http'
-    content = req.text.encode('iso-8859-1')
+    req = requests.get(url, headers={'Accept': 'application/xml'})
+    content = req.content
     tree = etree.fromstring(content).getroottree()
 
-    if tree.getroot().tag != 'sumario':
-        raise BormeDoesntExistException
-
-    url_base = URL_BASE % protocol
+    root = tree.getroot()
     urls = {}
-    for item in tree.xpath('//sumario/diario/seccion/emisor/item'):
-        prov = item.xpath('titulo')[0].text
-        if prov != provincia:
-            continue
-        url = url_base + item.xpath('urlPdf')[0].text
-        seccion = item.getparent().getparent().get('num')
-        urls[seccion] = url
+    if root.tag == 'response':
+        status = root.find('status/code')
+        if status is not None and status.text != '200':
+            raise BormeDoesntExistException
+        for item in root.findall('.//sumario/diario/seccion/item'):
+            prov = item.find('titulo').text
+            if prov != provincia:
+                continue
+            url_pdf = item.find('url_pdf').text
+            seccion = item.getparent().get('codigo')
+            urls[seccion] = url_pdf
+    elif root.tag == 'sumario':
+        protocol = 'https' if secure else 'http'
+        url_base = URL_BASE % protocol
+        for item in tree.xpath('//sumario/diario/seccion/emisor/item'):
+            prov = item.xpath('titulo')[0].text
+            if prov != provincia:
+                continue
+            url = url_base + item.xpath('urlPdf')[0].text
+            seccion = item.getparent().getparent().get('num')
+            urls[seccion] = url
+    else:
+        raise BormeDoesntExistException
 
     return urls
 
@@ -187,10 +209,6 @@ def get_url_pdfs_seccion(date, seccion, secure=USE_HTTPS):
 
     {'A CORUÑA': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-A-2016-75-15.pdf',
      'ALBACETE': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-A-2016-75-02.pdf',
-     'ALICANTE': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-A-2016-75-03.pdf',
-     'ALMERÍA': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-A-2016-75-04.pdf',
-     'ASTURIAS': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-A-2016-75-33.pdf',
-     'BADAJOZ': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-A-2016-75-06.pdf'
     }
     """
 
@@ -198,21 +216,29 @@ def get_url_pdfs_seccion(date, seccion, secure=USE_HTTPS):
         raise ValueError('Section must be: A or B')
 
     url = get_url_xml(date, secure=secure)
-    req = requests.get(url)
-    protocol = 'https' if secure else 'http'
-    content = req.text.encode(req.encoding)
+    req = requests.get(url, headers={'Accept': 'application/xml'})
+    content = req.content
     tree = etree.fromstring(content).getroottree()
 
-    if tree.getroot().tag != 'sumario':
-        raise BormeDoesntExistException
-
-    url_base = URL_BASE % protocol
+    root = tree.getroot()
     urls = {}
 
-    for item in tree.xpath('//sumario/diario/seccion[@num="{}"]/emisor/item'.format(seccion)):
-        provincia = item.xpath('titulo')[0].text
-        url = url_base + item.xpath('urlPdf')[0].text
-        urls[provincia] = url
+    if root.tag == 'response':
+        status = root.find('status/code')
+        if status is not None and status.text != '200':
+            raise BormeDoesntExistException
+        for item in root.findall('.//sumario/diario/seccion[@codigo="{}"]/item'.format(seccion)):
+            provincia = item.find('titulo').text
+            urls[provincia] = item.find('url_pdf').text
+    elif root.tag == 'sumario':
+        protocol = 'https' if secure else 'http'
+        url_base = URL_BASE % protocol
+        for item in tree.xpath('//sumario/diario/seccion[@num="{}"]/emisor/item'.format(seccion)):
+            provincia = item.xpath('titulo')[0].text
+            url = url_base + item.xpath('urlPdf')[0].text
+            urls[provincia] = url
+    else:
+        raise BormeDoesntExistException
 
     return urls
 
@@ -220,48 +246,47 @@ def get_url_pdfs_seccion(date, seccion, secure=USE_HTTPS):
 def get_url_seccion_c(date, format='xml', secure=USE_HTTPS):
     """
     Obtiene las URLs para descargar los BORMEs de la seccion C y formato y fecha indicada
-
-    {'AUMENTO DE CAPITAL': {'BRANDCONT SERVER, S.L.': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-C-2016-2310.pdf',
-                            'CLUB DEPORTIVO DE BALONCESTO DE SEVILLA, SOCIEDAD ANÓNIMA DEPORTIVA': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-C-2016-2311.pdf'},
-     'CONVOCATORIAS DE JUNTAS': {'AF-INCEPAL, S.A.': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-C-2016-2281.pdf',
-                                 'AUTOBUSES INTERURBANOS, S.A.': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-C-2016-2282.pdf',
-                                 'BANCOFAR, S.A.': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-C-2016-2283.pdf',
-                                 'CAP NEGRET, S.A.': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-C-2016-2284.pdf',
-                                 'CENTRO EUROPEO DE EMPRESAS E INNOVACIÓN\nDE ARAGÓN, S.A.': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-C-2016-2285.pdf'},
-     'REDUCCIÓN DE CAPITAL': {'ABENGOA, S.A.': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-C-2016-2312.pdf',
-                              'FONTEDUERO, S.A.U.': 'https://www.boe.es/borme/dias/2016/04/20/pdfs/BORME-C-2016-2313.pdf'}
-    }
     """
-
-    if format == 'xml':
-        format_ = 'urlXml'
-    elif format in ('htm', 'html'):
-        format_ = 'urlHtm'
-    elif format == 'pdf':
-        format_ = 'urlPdf'
-    else:
-        raise ValueError('format must be "xml", "htm" or "pdf"')
-
     url = get_url_xml(date, secure=secure)
-    req = requests.get(url)
-    protocol = 'https' if secure else 'http'
-    content = req.text.encode('iso-8859-1')
+    req = requests.get(url, headers={'Accept': 'application/xml'})
+    content = req.content
     tree = etree.fromstring(content).getroottree()
 
-    if tree.getroot().tag != 'sumario':
-        raise BormeDoesntExistException
-
-    url_base = URL_BASE % protocol
+    root = tree.getroot()
     urls = {}
 
-    for item_emisor in tree.xpath('//sumario/diario/seccion[@num="C"]/emisor'):
-        emisor = item_emisor.get('nombre')
-        urls[emisor] = {}
-
-        for item in item_emisor.xpath('item'):
-            provincia = item.xpath('titulo')[0].text
-            url = url_base + item.xpath(format_)[0].text
-            urls[emisor][provincia] = url
+    if root.tag == 'response':
+        status = root.find('status/code')
+        if status is not None and status.text != '200':
+            raise BormeDoesntExistException
+        format_map = {'xml': 'url_xml', 'htm': 'url_html', 'html': 'url_html', 'pdf': 'url_pdf'}
+        format_tag = format_map.get(format)
+        if not format_tag:
+            raise ValueError('format must be "xml", "htm" or "pdf"')
+        for apartado in root.findall('.//sumario/diario/seccion[@codigo="C"]/apartado'):
+            emisor = apartado.get('nombre')
+            urls[emisor] = {}
+            for item in apartado.findall('item'):
+                titulo = item.find('titulo').text
+                url_elem = item.find(format_tag)
+                if url_elem is not None:
+                    urls[emisor][titulo] = url_elem.text
+    elif root.tag == 'sumario':
+        format_map_old = {'xml': 'urlXml', 'htm': 'urlHtm', 'html': 'urlHtm', 'pdf': 'urlPdf'}
+        format_tag = format_map_old.get(format)
+        if not format_tag:
+            raise ValueError('format must be "xml", "htm" or "pdf"')
+        protocol = 'https' if secure else 'http'
+        url_base = URL_BASE % protocol
+        for item_emisor in tree.xpath('//sumario/diario/seccion[@num="C"]/emisor'):
+            emisor = item_emisor.get('nombre')
+            urls[emisor] = {}
+            for item in item_emisor.xpath('item'):
+                titulo = item.xpath('titulo')[0].text
+                url = url_base + item.xpath(format_tag)[0].text
+                urls[emisor][titulo] = url
+    else:
+        raise BormeDoesntExistException
 
     return urls
 
@@ -279,27 +304,28 @@ def get_url_pdfs(date, seccion=None, provincia=None, secure=USE_HTTPS):
 
 
 # date = (year, month, date) or datetime.date
-# "http://www.boe.es/diario_borme/xml.php?id=BORME-S-20150601"
 def get_url_xml(date, secure=USE_HTTPS):
     """ Obtiene el archivo XML que contiene las URLs de los BORMEs del dia indicado """
     if isinstance(date, tuple):
         date = datetime.date(year=date[0], month=date[1], day=date[2])
 
-    protocol = 'https' if secure else 'http'
-    return BORME_XML_URL.format(protocol=protocol, year=date.year, month=date.month, day=date.day)
+    return BORME_XML_URL.format(year=date.year, month=date.month, day=date.day)
 
 
-def download_url(url, filename=None, try_again=0):
+def download_url(url, filename=None, try_again=0, forcedownload=False, headers=None):
     logger.debug('Downloading URL: %s' % url)
     if os.path.exists(filename):
-        logger.debug('%s already exists!' % os.path.basename(filename))
-        return False
+        if forcedownload:
+            logger.debug('%s already exists, but forcing download!' % os.path.basename(filename))
+        else:
+            logger.debug('%s already exists!' % os.path.basename(filename))
+            return False
     try:
-        req = requests.get(url, stream=True)
+        req = requests.get(url, stream=True, headers=headers)
     except Exception as e:
         logger.warning('%s failed to download (%d time)!' % (url, try_again + 1))
         if try_again < 3:
-            return download_url(url, filename=filename, try_again=try_again+1)
+            return download_url(url, filename=filename, try_again=try_again+1, forcedownload=forcedownload, headers=headers)
         else:
             raise e
 
@@ -315,7 +341,7 @@ def download_url(url, filename=None, try_again=0):
     return True
 
 
-def download_urls(urls, path):
+def download_urls(urls, path, forcedownload=False):
     """
         Descarga las urls a path indicado.
         Devuelve la lista de archivos que fueron descargados.
@@ -324,7 +350,7 @@ def download_urls(urls, path):
     for url in urls.values():
         filename = url.split('/')[-1]
         full_path = os.path.join(path, filename)
-        downloaded = download_url(url, full_path)
+        downloaded = download_url(url, full_path, forcedownload=forcedownload)
 
         if downloaded:
             files.append(full_path)
@@ -335,7 +361,7 @@ def download_urls(urls, path):
     return files
 
 
-def download_urls_multi(urls, path, threads=THREADS):
+def download_urls_multi(urls, path, forcedownload=False, threads=THREADS):
     """
         Descarga las urls a path indicado (versión multihilo).
         urls: {_: url}
@@ -353,13 +379,13 @@ def download_urls_multi(urls, path, threads=THREADS):
     for url in urls.values():
         filename = url.split('/')[-1]
         full_path = os.path.join(path, filename)
-        q.put((url, full_path))
+        q.put((url, full_path, forcedownload))
 
     q.join()
     return files
 
 
-def download_urls_multi_names(urls, path, threads=THREADS):
+def download_urls_multi_names(urls, path, forcedownload=False, threads=THREADS):
     """
         Descarga las urls al path indicado (versión multihilo).
         urls: {filename: url}
@@ -376,7 +402,7 @@ def download_urls_multi_names(urls, path, threads=THREADS):
 
     for filename, url in urls.items():
         full_path = os.path.join(path, filename)
-        q.put((url, full_path))
+        q.put((url, full_path, forcedownload))
 
     q.join()
     return files
@@ -392,9 +418,9 @@ class ThreadDownloadUrl(Thread):
 
     def run(self):
         while True:
-            url, full_path = self.queue.get()
+            url, full_path, forcedownload = self.queue.get()
             time.sleep(0.6)
-            downloaded = download_url(url, full_path)
+            downloaded = download_url(url, full_path, forcedownload=forcedownload)
 
             if downloaded:
                 self.files.append(full_path)

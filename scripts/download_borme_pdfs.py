@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
-# download_borme_pdfs_A.py - Download BORME PDF files
+# download_borme_pdfs.py - Download BORME PDF files
 # Copyright (C) 2015-2022 Pablo Castellano <pablo@anche.no>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -34,48 +35,49 @@ ch = logging.StreamHandler()
 logger.addHandler(ch)
 
 
-def download_range(begin, end, directory, seccion, provincia=None):
+def download_range(begin, end, directory, seccion, provincia=None, forcedownload=False):
     """ Downloads PDFs using threads """
     next_date = begin
     total_downloaded = 0
 
-    while next_date and next_date <= end:
+    while next_date <= end:
+        # Skip weekends
+        if next_date.weekday() >= 5:
+            next_date += datetime.timedelta(days=1)
+            continue
+
         path = get_borme_pdf_path(next_date, directory)
         xml_path = get_borme_xml_filepath(next_date, directory)
         logger.info('\nDownloading files from {} (sección {}) to {}\n'.format(next_date, seccion, path))
         try:
             bxml = BormeXML.from_file(xml_path)
-            if bxml.next_borme:
-                logger.debug('{filename} already exists!'.format(filename=os.path.basename(xml_path)))
-            else:
+            if forcedownload:
                 logger.debug('Re-downloading {filename}'.format(filename=os.path.basename(xml_path)))
                 bxml = BormeXML.from_date(next_date)
-                try:
-                    os.makedirs(os.path.dirname(xml_path))
-                except OSError:
-                    pass
+                os.makedirs(os.path.dirname(xml_path), exist_ok=True)
                 bxml.save_to_file(xml_path)
+            else:
+                logger.debug('{filename} already exists!'.format(filename=os.path.basename(xml_path)))
 
         except IOError:
             logger.debug('Downloading {filename}'.format(filename=os.path.basename(xml_path)))
-            bxml = BormeXML.from_date(next_date)
             try:
-                os.makedirs(os.path.dirname(xml_path))
-            except OSError:
-                pass
+                bxml = BormeXML.from_date(next_date)
+            except BormeDoesntExistException:
+                logger.debug('No BORME for {} (holiday?)'.format(next_date))
+                next_date += datetime.timedelta(days=1)
+                continue
+            os.makedirs(os.path.dirname(xml_path), exist_ok=True)
             bxml.save_to_file(xml_path)
 
-        try:
-            os.makedirs(path)
-        except OSError:
-            pass
+        os.makedirs(path, exist_ok=True)
 
-        _, files = bxml.download_borme(path, provincia=provincia, seccion=seccion)
+        _, files = bxml.download_borme(path, provincia=provincia, seccion=seccion, forcedownload=forcedownload)
 
         if len(files) > 0:
             logger.info('Downloaded {} files from {}'.format(len(files), next_date))
         total_downloaded += len(files)
-        next_date = bxml.next_borme
+        next_date += datetime.timedelta(days=1)
 
     logger.info('\n{} total files were downloaded'.format(total_downloaded))
 
@@ -87,6 +89,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--directory', default=BORME_ROOT, help='Directory to download files (default is {})'.format(BORME_ROOT))
     parser.add_argument('-s', '--seccion', default=bormeparser.SECCION.A, choices=['A', 'B', 'C'], help='BORME seccion')
     parser.add_argument('-p', '--provincia', choices=bormeparser.provincia.ALL_PROVINCIAS, help='BORME provincia')
+    parser.add_argument('-o', '--forcedownload', action='store_true', default=False, help='Force overwrite download of files')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose mode')
     args = parser.parse_args()
 
@@ -110,7 +113,14 @@ if __name__ == '__main__':
     else:
         date_to = datetime.datetime.strptime(args.to, '%Y-%m-%d').date()
 
+    if args.forcedownload:
+        force_download = True
+        logger.debug('Forcing download of files (even if they already exist)')
+    else:
+        force_download = False
+        logger.debug('Not forcing download of files (if they already exist, they will not be downloaded again)')
+
     try:
-        download_range(date_from, date_to, args.directory, args.seccion, args.provincia)
+        download_range(date_from, date_to, args.directory, args.seccion, args.provincia, force_download)
     except BormeDoesntExistException:
         logger.warn('It looks like there is no BORME for the start date ({}). Nothing was downloaded'.format(date_from))

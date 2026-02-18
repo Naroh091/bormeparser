@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # bormeparser.backends.pypdf2.parser.py -
 # Copyright (C) 2015-2022 Pablo Castellano <pablo@anche.no>
@@ -20,7 +21,7 @@
 from bormeparser.backends.base import BormeAParserBackend
 import logging
 
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
 from bormeparser.regex import regex_cargos, regex_empresa, regex_argcolon, regex_noarg, is_acto_cargo, is_acto_bold,\
                               regex_bold_acto, REGEX_ARGCOLON, REGEX_NOARG, REGEX_PDF_TEXT, REGEX_BORME_NUM, REGEX_BORME_CVE,\
@@ -57,6 +58,9 @@ class PyPDF2Parser(BormeAParserBackend):
         seccion = False
         subseccion = False
         texto = False
+        anuncio_id = None
+        empresa = None
+        extra = None
 
         DATA = {
             'borme_fecha': None,
@@ -69,9 +73,9 @@ class PyPDF2Parser(BormeAParserBackend):
         self.actos = []
 
         fp = open(self.filename, 'rb')
-        reader = PdfFileReader(fp)
-        for n in range(0, reader.getNumPages()):
-            content = reader.getPage(n).getContents().getData()
+        reader = PdfReader(fp)
+        for n in range(len(reader.pages)):
+            content = reader.pages[n].get_contents().get_data()
             logger.debug('---- BEGIN OF PAGE ----')
 
             # Python 3
@@ -156,7 +160,11 @@ class PyPDF2Parser(BormeAParserBackend):
                         logger.debug('END: cabecera')
                         cabecera = False
                         data = self._clean_data(data)
-                        anuncio_id, empresa, extra = regex_empresa(data, sanitize=self.sanitize)
+                        new_anuncio_id, new_empresa, new_extra = regex_empresa(data, sanitize=self.sanitize)
+                        if new_anuncio_id == anuncio_id and not new_empresa and empresa:
+                            logger.debug('  Duplicate header with blank empresa for anuncio %s, keeping existing: %s' % (anuncio_id, empresa))
+                        else:
+                            anuncio_id, empresa, extra = new_anuncio_id, new_empresa, new_extra
                         logger.debug('  anuncio_id: %s' % anuncio_id)
                         logger.debug('  empresa: %s' % empresa)
                         logger.debug('  extra: {}'.format(extra))
@@ -257,6 +265,12 @@ class PyPDF2Parser(BormeAParserBackend):
 
         if nombreacto:
             self._parse_acto(nombreacto, data, prefix='END')
+            if not empresa:
+                logger.warning(msg='No se encontró la empresa en el fichero %s' % self.filename)
+            if not extra:
+                logger.warning(msg='No se encontró el "extra" en el fichero %s' % self.filename)
+            if not anuncio_id:
+                logger.warning(msg='No se encontró el anuncio_id en el fichero %s' % self.filename)
             DATA[anuncio_id] = {
                 'Empresa': empresa,
                 'Extra': extra,
@@ -275,7 +289,7 @@ class PyPDF2Parser(BormeAParserBackend):
         if is_acto_cargo(nombreacto):
             cargos = regex_cargos(data, sanitize=self.sanitize)
             if not cargos:
-                logger.warning('No se encontraron cargos en la cadena: %s' % data)
+                logger.warning(f'No se encontraron cargos en la cadena: {data}\n\tdel fichero {self.filename}')
             data = cargos
 
         logger.debug('  %s nombreactoW: %s' % (prefix, nombreacto))
@@ -284,11 +298,17 @@ class PyPDF2Parser(BormeAParserBackend):
 
     def _parse_acto_bold(self, nombreacto, data):
         end = False
+        if not nombreacto:
+            logger.debug('No hay nombreacto')
+            end = True
+            return end, nombreacto
 
         if is_acto_bold_mix(nombreacto):
             end = True
         elif is_acto_bold(nombreacto):
             acto_colon, arg_colon, nombreacto = regex_bold_acto(nombreacto)
+            if not nombreacto:
+                logger.warning(msg='No se encontró el nombre del acto en el fichero %s' % self.filename)
             self.actos.append({acto_colon: arg_colon})
 
             logger.debug('  F2 nombreactoW: %s -- %s' % (acto_colon, arg_colon))

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # test_borme.py -
 # Copyright (C) 2015-2022 Pablo Castellano <pablo@anche.no>
@@ -212,14 +213,13 @@ class BormeActoTestCase(unittest.TestCase):
 
 class BormeXMLInstanceTestCase(unittest.TestCase):
     date = (2015, 9, 24)
-    url = 'https://www.boe.es/diario_borme/xml.php?id=BORME-S-20150924'
-    url_insecure = 'http://www.boe.es/diario_borme/xml.php?id=BORME-S-20150924'
+    url = 'https://www.boe.es/datosabiertos/api/borme/sumario/20150924'
     nbo = 183
 
     def test_from_file(self):
         path = os.path.join(EXAMPLES_PATH, 'BORME-S-20150924.xml')
 
-        # from local file
+        # from local file (old format)
         bxml = BormeXML.from_file(path)
         self.assertEqual(bxml.url, self.url)
         self.assertEqual(bxml.date, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2]))
@@ -231,35 +231,19 @@ class BormeXMLInstanceTestCase(unittest.TestCase):
         url = bxml.get_url_cve("BORME-A-2015-183-04")
         self.assertEqual(url, "https://www.boe.es/borme/dias/2015/09/24/pdfs/BORME-A-2015-183-04.pdf")
 
-        # from remote file (https)
-        bxml = BormeXML.from_file(self.url)
-        self.assertEqual(bxml.url, self.url)
-        self.assertEqual(bxml.date, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2]))
-        self.assertEqual(bxml.filename, None)
-        self.assertEqual(bxml.nbo, self.nbo)
-        self.assertEqual(bxml.prev_borme, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2] - 1))
-        self.assertEqual(bxml.next_borme, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2] + 1))
-
-        # from remote file (insecure http)
-        bxml = BormeXML.from_file(self.url, secure=False)
-        self.assertEqual(bxml.url, self.url_insecure)
-        self.assertEqual(bxml.date, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2]))
-        self.assertEqual(bxml.filename, None)
-        self.assertEqual(bxml.nbo, self.nbo)
-        self.assertEqual(bxml.prev_borme, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2] - 1))
-        self.assertEqual(bxml.next_borme, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2] + 1))
-
         # Exceptions
         self.assertRaises(IOError, BormeXML.from_file, 'invalidfile.xml')
 
     def test_from_date(self):
+        # from_date now uses the new API format
         bxml = BormeXML.from_date(self.date)
         self.assertEqual(bxml.url, self.url)
         self.assertEqual(bxml.date, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2]))
         self.assertEqual(bxml.filename, None)
         self.assertEqual(bxml.nbo, self.nbo)
-        self.assertEqual(bxml.prev_borme, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2] - 1))
-        self.assertEqual(bxml.next_borme, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2] + 1))
+        # New API format does not provide prev/next borme dates
+        self.assertIsNone(bxml.prev_borme)
+        self.assertIsNone(bxml.next_borme)
 
         date = datetime.date(*self.date)
         bxml = BormeXML.from_date(date)
@@ -267,8 +251,6 @@ class BormeXMLInstanceTestCase(unittest.TestCase):
         self.assertEqual(bxml.date, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2]))
         self.assertEqual(bxml.filename, None)
         self.assertEqual(bxml.nbo, self.nbo)
-        self.assertEqual(bxml.prev_borme, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2] - 1))
-        self.assertEqual(bxml.next_borme, datetime.date(year=self.date[0], month=self.date[1], day=self.date[2] + 1))
 
         # Exceptions
         self.assertRaises(BormeDoesntExistException, BormeXML.from_date, (2015, 9, 26))

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
-# seccion.py -
+# acto.py -
 # Copyright (C) 2015-2022 Pablo Castellano <pablo@anche.no>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -50,8 +51,7 @@ class ACTO:
     ADAPTACION_LEY_2_95 = 30
     CIERRE_PROVISIONAL_BAJA_EN_EL_INDICE_DE_ENTIDADES_JURIDICAS = 31
     CIERRE_PROVISIONAL_REVOCACION_NIF = 32
-    REACTIVACION_DE_LA_SOCIEDAD = 32
-
+    REACTIVACION_DE_LA_SOCIEDAD = 33
     FE_DE_ERRATAS = 34
     DATOS_REGISTRALES = 35
     CREDITO_INCOBRABLE = 36
@@ -75,6 +75,8 @@ class ACTO:
     ANOTACION_PREVENTIVA_DECLARACION = 54
     CIERRE_SUCURSAL = 55
     ADAPTACION_LEY_44_2015 = 56
+    BENEFICIARIA = 57
+    CIERRE_PROVISIONAL_ART485_TRLC = 58
 
     # Palabras clave con argumentos
     _arg_keywords = {
@@ -86,6 +88,7 @@ class ACTO:
         'Cambio de denominación social': CAMBIO_DE_DENOMINACION_SOCIAL,
         'Cambio de domicilio social': CAMBIO_DE_DOMICILIO_SOCIAL,
         'Ampliacion del objeto social': AMPLIACION_DEL_OBJETO_SOCIAL,
+        'Ampliación del objeto social': AMPLIACION_DEL_OBJETO_SOCIAL,
         'Disolución': DISOLUCION,
         'Reelecciones': REELECCIONES,
         'Constitución': CONSTITUCION,
@@ -97,6 +100,7 @@ class ACTO:
         'Reducción de capital': REDUCCION_DE_CAPITAL,
         'Situación concursal': SITUACION_CONCURSAL,
         'Fusión por absorción': FUSION_POR_ABSORCION,
+        'Absorbidas': FUSION_POR_ABSORCION,
         'Suspensión de pagos': SUSPENSION_DE_PAGOS,
         'Transformación de sociedad': TRANSFORMACION_DE_SOCIEDAD,
         'Cancelaciones de oficio de nombramientos': CANCELACIONES_DE_OFICIO_DE_NOMBRAMIENTOS,
@@ -107,6 +111,8 @@ class ACTO:
         'Modificación de poderes': MODIFICACION_PODERES,
         'Escisión parcial': ESCISION_PARCIAL,
         'Fusión por unión': FUSION_UNION,
+        'Beneficiarias': BENEFICIARIA,
+        'Beneficiarios de la cesion': BENEFICIARIA,
         'Quiebra': QUIEBRA,
         'Sucursal': SUCURSAL,
         'Cesión global de activo y pasivo': CESION_GLOBAL_ACTIVO_PASIVO,
@@ -122,6 +128,7 @@ class ACTO:
         'Sociedad unipersonal': SOCIEDAD_UNIPERSONAL,
         'Extinción': EXTINCION,
         'Pérdida del caracter de unipersonalidad': PERDIDA_DEL_CARACTER_DE_UNIPERSONALIDAD,
+        'Pérdida del carácter de unipersonalidad': PERDIDA_DEL_CARACTER_DE_UNIPERSONALIDAD,
         'Reapertura hoja registral': REAPERTURA_HOJA_REGISTRAL,
         'Adaptación Ley 2/95': ADAPTACION_LEY_2_95,
         'Adaptación Ley 44/2015': ADAPTACION_LEY_44_2015,
@@ -133,6 +140,8 @@ class ACTO:
         'Reactivación de la sociedad (Art. 242 del Reglamento del Registro Mercantil)': REACTIVACION_DE_LA_SOCIEDAD,
         'Adaptación de sociedad': ADAPTACION_DE_LA_SOCIEDAD,
         'Cierre de Sucursal': CIERRE_SUCURSAL,
+        'Cierre provisional hoja registral Art.485 TRLC. Insuficiencia de masa activa': CIERRE_PROVISIONAL_ART485_TRLC,
+        'Cierre provisional hoja registral Art.485 TRLC. Finalización fase Liquidación': CIERRE_PROVISIONAL_ART485_TRLC,
     }
 
     # Palabras clave seguidas por :
